@@ -194,6 +194,17 @@ Generates a full text report saved to disk with all findings, commands, and resu
 
 A full dark-theme desktop application built with Python + CustomTkinter.
 
+### Mode Comparison
+
+| | 🪟 Windows — Demo Mode | 🐧 Kali Linux — Live Mode |
+|--|----------------------|--------------------------|
+| **Setup** | `pip install customtkinter` only | Run `install.sh` |
+| **Commands** | Displayed, not executed | Fully executed (real attacks) |
+| **Output** | Realistic simulated results | Real terminal output |
+| **Use case** | Presentation / walkthrough | Actual lab penetration test |
+| **Hardware needed** | Any PC | PC + monitor-mode Wi-Fi adapter |
+| **Sudo required** | No | Yes |
+
 **Features:**
 - 15-step guided wizard — one screen per step
 - Explains *what* and *why* before every command
@@ -205,32 +216,57 @@ A full dark-theme desktop application built with Python + CustomTkinter.
 - Hardening score calculator with before/after comparison
 - Auto-saves session report to text file
 
-### Installation & Run
+### 🪟 Windows — Demo / Presentation Mode
+
+No setup required. Works out of the box on any Windows machine.
+
+```powershell
+# 1. Install Python (if not already installed)
+#    Download from: https://python.org
+
+# 2. Install the GUI library
+pip install customtkinter
+
+# 3. Run SmartGuard
+python smartguard_gui.py
+```
+
+> In demo mode, all commands are **displayed but not executed**.
+> The wizard shows realistic simulated output so you can walk through
+> the entire attack and hardening flow as a presentation — without needing
+> a wireless adapter or Kali Linux.
+
+---
+
+### 🐧 Linux (Kali) — Live Execution Mode
+
+Full functionality. All commands execute for real against lab targets.
 
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/i39F/IoT-SmartGuard-Security.git
 cd IoT-SmartGuard-Security
 
-# Install Python dependencies
-pip install customtkinter
+# 2. Run the installer (installs all tools + wordlist automatically)
+chmod +x install.sh && sudo bash install.sh
 
-# Run the GUI (on Kali Linux use sudo for full functionality)
+# 3. Launch the GUI wizard
 sudo python3 smartguard_gui.py
 
-# Or run the original Bash CLI version
+# OR use the original Bash CLI
 sudo bash smartguard.sh
 ```
 
-### Requirements
+**What the installer sets up:**
+- `aircrack-ng` suite (airmon-ng, airodump-ng, aireplay-ng, aircrack-ng)
+- `nmap` — network scanner
+- `xterm` — terminal for background capture window
+- `python3` + `customtkinter` — GUI library
+- `rockyou.txt` — wordlist for password cracking
 
-```bash
-# Kali Linux / Debian — install tools
-sudo apt update && sudo apt install -y aircrack-ng nmap xterm
-
-# Decompress the wordlist if needed
-sudo gunzip /usr/share/wordlists/rockyou.txt.gz
-```
+> ⚠️ Requires a wireless adapter that supports **monitor mode**.
+> Most built-in laptop Wi-Fi cards do NOT support this.
+> Recommended: Alfa AWUS036ACH or similar USB adapter.
 
 ---
 
