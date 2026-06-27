@@ -392,10 +392,10 @@ SmartGuard auto-generates a full session report at Step 15, summarising all phas
 | Name | Role |
 |------|------|
 | Sulaiman Almanea | Team Lead · Attack Phase |
-| Muath Alyhya | Wireless Security & Testing |
+| Muath Al-Yahya | Wireless Security & Testing |
 | Abdulaziz Alharbi | Network Reconnaissance |
 | Majed Alghrras | Hardening & Documentation |
-| Mansour Alsuwayh | Tool Development & Reporting |
+| Mansour Alsuwaih | Tool Development & Reporting |
 
 **Supervisor:** Dr. Ahmed Elaraby · Department of Cybersecurity · Buraydah Colleges
 
@@ -410,7 +410,7 @@ SmartGuard auto-generates a full session report at Step 15, summarising all phas
 يستبدل الأداة الطريقة اليدوية (أمر بأمر) بـ **wizard تفاعلي من 15 خطوة** تشرح كل خطوة ماذا تفعل ولماذا قبل تنفيذها.
 
 ### الفريق
-سليمان المنيع · معاذ اليحيا · عبدالعزيز الحربي · ماجد الغراس · منصور السويه
+سليمان المنيع · معاذ اليحيى · عبدالعزيز الحربي · ماجد الغراس · منصور السويح
 
 **المشرف:** د. أحمد العرابي · قسم الأمن السيبراني · كليات بريدة
 
