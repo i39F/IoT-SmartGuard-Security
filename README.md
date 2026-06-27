@@ -387,17 +387,9 @@ SmartGuard auto-generates a full session report at Step 15, summarising all phas
 
 ---
 
-## 👥 Team
+## 🎓 Academic
 
-| Role | Responsibility |
-|------|---------------|
-| Team Lead | Attack Phase & Project Architecture |
-| Member 2 | Wireless Security & Testing |
-| Member 3 | Network Reconnaissance |
-| Member 4 | Hardening & Documentation |
-| Member 5 | Tool Development & Reporting |
-
-**Supervised by:** Department of Cybersecurity · Buraydah Colleges
+**Buraydah Colleges · Department of Cybersecurity · Final Year Project 2025/2026**
 
 ---
 
@@ -418,8 +410,6 @@ SmartGuard auto-generates a full session report at Step 15, summarising all phas
 ---
 
 <div align="center">
-
-**Buraydah Colleges · Cybersecurity Department · Final Year Project 2025/2026**
 
 *"From default credentials to zero trust — one step at a time."*
 
