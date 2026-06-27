@@ -1,0 +1,7 @@
+# Word documents (large binary files - keep only PDF)
+*.docx
+*.doc
+
+# Temp files
+*.tmp
+*.log
