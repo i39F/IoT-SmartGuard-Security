@@ -11,6 +11,10 @@ Buraydah Colleges · Department of Cybersecurity · 2025 / 2026
 [![Version](https://img.shields.io/badge/Version-2.0-cyan?style=flat-square)](#)
 [![Lab Only](https://img.shields.io/badge/Use-Lab%20Only-red?style=flat-square)](#)
 
+<br>
+
+![SmartGuard GUI](docs/screenshots/smartguard-gui.png)
+
 </div>
 
 ---
@@ -256,6 +260,34 @@ IoT-SmartGuard-Security/
 | 🔔 Notifications | Alert when handshake is captured (sound / popup) |
 | 🔌 WPS Testing | Add WPS PIN attack module (reaver / bully) |
 | 📡 Bluetooth IoT | Extend to BLE device scanning (smart locks, wearables) |
+
+---
+
+## 📸 Screenshots
+
+### SmartGuard GUI — Welcome Screen
+![SmartGuard GUI](docs/screenshots/smartguard-gui.png)
+
+### Wizard — Step 01 (Select Interface)
+![Wizard Step 1](docs/screenshots/wizard-step1.png)
+
+### Step 06 — Handshake Capture Running
+![Handshake Capture](docs/screenshots/smartguard-capture.png)
+
+### Step 08 — Password Cracked
+![KEY FOUND](docs/screenshots/key-found.png)
+
+### Gaining Access with Default Credentials
+![Default Credentials Access](docs/screenshots/default-credentials-access.png)
+
+### Phase 02 — Port Scan BEFORE Hardening
+![Nmap Before](docs/screenshots/nmap-before.png)
+
+### Phase 03 — Port Scan AFTER Hardening
+![Nmap After](docs/screenshots/nmap-after.png)
+
+### Lab Overview
+![Lab Overview](docs/screenshots/lab-overview.png)
 
 ---
 
