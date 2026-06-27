@@ -265,29 +265,89 @@ IoT-SmartGuard-Security/
 
 ## 📸 Screenshots
 
-### SmartGuard GUI — Welcome Screen
+> **Note:** All screenshots below are captured from a controlled lab environment.
+> They demonstrate real attack techniques applied to our test device, followed by the hardening measures that eliminated each vulnerability.
+> No real networks or private devices were harmed.
+
+---
+
+### 🖥️ SmartGuard GUI — Welcome Screen
+
 ![SmartGuard GUI](docs/screenshots/smartguard-gui.png)
 
-### Wizard — Step 01 (Select Interface)
+The main interface of SmartGuard v2.0. Provides a 15-step guided wizard that walks through the entire audit from wireless attack to hardening verification. Each step explains the concept before executing the command.
+
+---
+
+### 🔌 Step 01 — Select Wireless Interface
+
 ![Wizard Step 1](docs/screenshots/wizard-step1.png)
 
-### Step 06 — Handshake Capture Running
+The first step of the wizard. The tool identifies the wireless adapter (e.g. `wlan0`) before putting it into monitor mode. This is required for all subsequent wireless operations.
+
+---
+
+### 📡 Step 06 — Handshake Capture (Running)
+
 ![Handshake Capture](docs/screenshots/smartguard-capture.png)
 
-### Step 08 — Password Cracked
+`airodump-ng` is locked onto the target router's BSSID and channel, listening for a WPA2 handshake. The capture runs in the background while Step 07 (Deauth) forces clients to reconnect — triggering the handshake broadcast.
+
+---
+
+### 🔑 Step 08 — Password Cracked
+
 ![KEY FOUND](docs/screenshots/key-found.png)
 
-### Gaining Access with Default Credentials
-![Default Credentials Access](docs/screenshots/default-credentials-access.png)
+`aircrack-ng` completed a dictionary attack against the captured `.cap` file using `rockyou.txt`.
+**Result: `KEY FOUND! [ 12345678 ]`** — the router's weak default password was cracked in seconds.
+This gave the attacker full access to the local network and all devices on it.
 
-### Phase 02 — Port Scan BEFORE Hardening
+> **Fix applied:** Router password changed to a strong, randomly generated passphrase.
+
+---
+
+### 🚪 Accessing Camera with Default Credentials
+
+![Default Credentials](docs/screenshots/default-credentials-access.png)
+
+After joining the network, the IP camera was accessed using its factory-default login (`admin` / `admin`). The camera's admin panel and live stream were fully exposed with no authentication barrier.
+
+> **Fix applied:** Default credentials removed. Strong unique password set on the camera.
+
+---
+
+### 🔴 Port Scan — BEFORE Hardening
+
 ![Nmap Before](docs/screenshots/nmap-before.png)
 
-### Phase 03 — Port Scan AFTER Hardening
+`nmap` scan on the IP camera reveals two critical open ports:
+- **Port 80 (HTTP)** — admin panel accessible without HTTPS
+- **Port 554 (RTSP)** — live video stream exposed to anyone on the network, no authentication required
+
+This is the attack surface before any hardening was applied.
+
+---
+
+### 🟢 Port Scan — AFTER Hardening
+
 ![Nmap After](docs/screenshots/nmap-after.png)
 
-### Lab Overview
-![Lab Overview](docs/screenshots/lab-overview.png)
+The same `nmap` scan after applying the Defense-in-Depth strategy:
+- **Port 554** → `closed` — RTSP disabled, video stream no longer accessible
+- **Port 80** → `closed` — HTTP management restricted
+
+The attack surface has been eliminated. An attacker who gains LAN access now finds nothing to exploit.
+
+> **What changed:** RTSP disabled in camera settings. Network segmentation applied (IoT VLAN). SSID hidden.
+
+---
+
+### 📊 Session Report
+
+![Report](docs/screenshots/report.png)
+
+SmartGuard auto-generates a full session report at Step 15, summarising all phases: attack findings, hardening checklist results, score, and attack surface reduction percentage. The report is saved as a `.txt` file for documentation.
 
 ---
 
